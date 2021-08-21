@@ -5,7 +5,7 @@ import '@typechain/hardhat';
 import 'hardhat-deploy';
 import { HardhatUserConfig, task } from 'hardhat/config';
 import 'solidity-coverage';
-import { PRIVATE_NETWORK_PRIVATE_KEY } from './env';
+import { TEST_PRIVATE_KEY } from './env';
 
 function typedNamedAccounts<T>(namedAccounts: { [key in string]: T }) {
   return namedAccounts;
@@ -25,7 +25,7 @@ const config: HardhatUserConfig = {
     private: {
       url: 'http://52.12.224.224:8545',
       chainId: 1337,
-      accounts: [PRIVATE_NETWORK_PRIVATE_KEY],
+      accounts: [TEST_PRIVATE_KEY],
     },
   },
   etherscan: {
@@ -38,10 +38,10 @@ const config: HardhatUserConfig = {
       private: 0,
     },
     pancakeswapRouter: {
-      private: '0xA526452c864437eaAB0858459720bE82d357fA80',
+      private: '0xDbba2DF274ED3fD1350f5D18F85148Fb01fAbbfC',
     },
     usdc: {
-      private: '0xEc6802f549BC3E99FF12aF779A8e0B90453864C1',
+      private: '0xFF7F978a9e591C2a870aEc1fD0876f7FF8f3036e',
     },
   }),
   typechain: {

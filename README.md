@@ -63,7 +63,7 @@ slither . --triage
 ## Deploy
 
 You should specify the network you want to deploy to. Replace `<network>` in any of the commands below with
-the network of your choice(e.g., `ropsten`).
+the network of your choice(e.g., `bsctestnet`).
 
 ### Deploy Ledgity
 
@@ -86,11 +86,11 @@ Ledgity Router allows users to add liquidity bypassing fees.
 ```sh
 hh --network <network> deploy --tags ledgity-router
 ```
+
 ## Verify
 
 You should specify the network you want to verify to. Replace `<network>` in any of the commands below with
-the network of your choice(e.g., `ropsten`).
-
+the network of your choice(e.g., `bsctestnet`).
 
 ```sh
 hh verify --network <network> DEPLOYED_CONTRACT_ADDRESS "Constructor argument 1" "Argument 2"
