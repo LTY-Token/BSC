@@ -7,3 +7,16 @@ node_modules
 
 # Logs
 *.log
+
+# Hardhat files
+artifacts
+cache
+client/src/abi
+typechain
+
+# Environment
+env.ts
+
+# Tests
+coverage
+coverage.json
