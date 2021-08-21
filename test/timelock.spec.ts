@@ -1,9 +1,8 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import chai from 'chai';
+import chai, { expect } from 'chai';
 import { ethers } from 'hardhat';
 import { evmIncreaseTime, getBlockTimestamp, snapshottedBeforeEach } from '../shared/utils';
 import { MockUSDC, Timelock } from '../typechain';
-const { expect } = chai;
 
 describe('Timelock', () => {
   let aliceAccount: SignerWithAddress, bobAccount: SignerWithAddress;

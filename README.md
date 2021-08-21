@@ -1,5 +1,8 @@
 # Ledgity
 
+Although, we use Uniswap interfaces in smart contracts, they are compatible with PancakeSwap ones, so
+it is ok to use them.
+
 ## Setup project
 
 Copy `env.example.ts` and rename it to `env.ts`. Fill in all the variables there.

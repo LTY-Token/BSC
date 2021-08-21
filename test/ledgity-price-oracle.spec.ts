@@ -2,9 +2,9 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
-import { deployUniswap, evmIncreaseTime, getBlockTimestamp, snapshottedBeforeEach, toTokens, ZERO_ADDRESS } from '../shared/utils';
-import { LedgityPriceOracle, MockERC20, MockUSDC, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02 } from '../typechain';
-import UniswapV2PairArtifact from '../uniswap_build/contracts/UniswapV2Pair.json';
+import { deployPancakeswap, evmIncreaseTime, getBlockTimestamp, snapshottedBeforeEach, toTokens, ZERO_ADDRESS } from '../shared/utils';
+import { LedgityPriceOracle, MockERC20, MockUSDC, PancakeFactory, PancakePair, PancakeRouter } from '../typechain';
+import PancakePairArtifact from '../pancakeswap_build/contracts/PancakePair.json';
 
 
 const PERIOD = 12 * 60 * 60;  // 12 hours
@@ -21,16 +21,16 @@ describe('LedgityPriceOracle', () => {
   let oracle: LedgityPriceOracle;
   let token0: MockUSDC;
   let token1: MockUSDC;
-  let factory: UniswapV2Factory;
-  let router: UniswapV2Router02;
-  let pair: UniswapV2Pair;
+  let factory: PancakeFactory
+  let router: PancakeRouter;
+  let pair: PancakePair;
   snapshottedBeforeEach(async () => {
-    ({ factory, router } = await deployUniswap(aliceAccount));
+    ({ factory, router } = await deployPancakeswap(aliceAccount));
     const tokenA = await (await ethers.getContractFactory('MockUSDC')).deploy();
     const tokenB = await (await ethers.getContractFactory('MockUSDC')).deploy();
     [token0, token1] = tokenA.address < tokenB.address ? [tokenA, tokenB] : [tokenB, tokenA];
     await factory.createPair(token0.address, token1.address);
-    pair = await ethers.getContractAt(UniswapV2PairArtifact.abi, await factory.getPair(token0.address, token1.address)) as UniswapV2Pair;
+    pair = await ethers.getContractAt(PancakePairArtifact.abi, await factory.getPair(token0.address, token1.address)) as PancakePair;
     await addLiquidity(INITIAL_LIQUIDITY[0], INITIAL_LIQUIDITY[1]);
     oracle = await (await ethers.getContractFactory('LedgityPriceOracle')).deploy(pair.address);
   });

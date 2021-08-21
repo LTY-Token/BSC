@@ -1,11 +1,10 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import chai from 'chai';
+import chai, { expect } from 'chai';
 import { BigNumber, BigNumberish } from "ethers";
 import { ethers } from 'hardhat';
-import { addLiquidityUtil, deployUniswap, evmIncreaseTime, getBlockTimestamp, LEDGITY_DECIMALS, NON_ZERO_ADDRESS, snapshottedBeforeEach, toTokens, ZERO_ADDRESS } from '../shared/utils';
-import { Ledgity, LedgityPriceOracle, MockUSDC, Reserve, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02 } from '../typechain';
-import UniswapV2PairArtifact from '../uniswap_build/contracts/UniswapV2Pair.json';
-const { expect } = chai;
+import { addLiquidityUtil, deployPancakeswap, evmIncreaseTime, getBlockTimestamp, LEDGITY_DECIMALS, NON_ZERO_ADDRESS, snapshottedBeforeEach, toTokens, ZERO_ADDRESS } from '../shared/utils';
+import { Ledgity, LedgityPriceOracle, MockUSDC, Reserve, PancakeFactory, PancakePair, PancakeRouter } from '../typechain';
+import PancakePairArtifact from '../pancakeswap_build/contracts/PancakePair.json';
 
 const INITIAL_TOTAL_SUPPLY = toTokens('2760000000', 18);
 const NUM_TOKENS_TO_LIQUIFY_OR_COLLECT = INITIAL_TOTAL_SUPPLY.mul(15).div(10000);
@@ -21,11 +20,11 @@ describe('Ledgity', () => {
   let token: Ledgity;
   let tokenReserve: Reserve;
   let priceOracle: LedgityPriceOracle;
-  let factory: UniswapV2Factory;
+  let factory: PancakeFactory;
   let usdcToken: MockUSDC;
-  let router: UniswapV2Router02;
+  let router: PancakeRouter;
   snapshottedBeforeEach(async () => {
-    ({ factory, router } = await deployUniswap(aliceAccount));
+    ({ factory, router } = await deployPancakeswap(aliceAccount));
     usdcToken = await (await ethers.getContractFactory('MockUSDC')).deploy();
     token = await (await ethers.getContractFactory('Ledgity')).deploy();
     tokenReserve = await (await ethers.getContractFactory('Reserve')).deploy(router.address, token.address, usdcToken.address, NON_ZERO_ADDRESS);
@@ -37,10 +36,10 @@ describe('Ledgity', () => {
 
   async function getPair() {
     const pairAddress = await factory.getPair(token.address, usdcToken.address);
-    return await ethers.getContractAt(UniswapV2PairArtifact.abi, pairAddress) as UniswapV2Pair;
+    return await ethers.getContractAt(PancakePairArtifact.abi, pairAddress) as PancakePair;
   }
 
-  async function getPairIndices(pair: UniswapV2Pair) {
+  async function getPairIndices(pair: PancakePair) {
     return await pair.token0() === token.address ? [0, 1] as const : [1, 0] as const;
   }
 
@@ -159,7 +158,7 @@ describe('Ledgity', () => {
       await token.transfer(charlie, 1);
     });
 
-    it('should not limit uniswap', async () => {
+    it('should not limit pancakeswap', async () => {
       await usdcToken.mint(alice, toTokens('100000', await usdcToken.decimals()));
       async function doSwap() {
         const usdcAmount = toTokens(100, await usdcToken.decimals());
@@ -306,7 +305,7 @@ describe('Ledgity', () => {
   });
 
   describe('transfer: fees', () => {
-    let pair: UniswapV2Pair;
+    let pair: PancakePair;
     let reservesBefore: { 0: BigNumber, 1: BigNumber; };
     let tokenIndex: 0 | 1, usdcIndex: 0 | 1;
     snapshottedBeforeEach(async () => {
@@ -640,7 +639,7 @@ describe('Ledgity', () => {
   });
 
   describe('fee destination', () => {
-    let pair: UniswapV2Pair;
+    let pair: PancakePair;
     let tokenIndex: 0 | 1, usdcIndex: 0 | 1;
     let reservesBefore: { 0: BigNumber, 1: BigNumber; };
     snapshottedBeforeEach(async () => {
@@ -816,7 +815,7 @@ describe('Ledgity', () => {
   });
 
   describe('account exclusion', () => {
-    it('should exclude token, reserve, and uniswap pair from RFI by default', async () => {
+    it('should exclude token, reserve, and pancakeswap pair from RFI by default', async () => {
       expect(await token.isExcluded(token.address)).to.eq(true);
       expect(await token.isExcluded(tokenReserve.address)).to.eq(true);
       expect(await token.isExcluded((await getPair()).address)).to.eq(true);

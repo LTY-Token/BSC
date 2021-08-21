@@ -1,9 +1,9 @@
 import { BigNumber, BigNumberish, Signer } from 'ethers';
 import { ethers } from 'hardhat';
-import { ILedgity, MockUSDC, UniswapV2Factory__factory, UniswapV2Router02, UniswapV2Router02__factory, WETH9__factory } from '../typechain';
-import UniswapV2FactoryArtifact from '../uniswap_build/contracts/UniswapV2Factory.json';
-import UniswapV2Router02Artifact from '../uniswap_build/contracts/UniswapV2Router02.json';
-import WETH9Artifact from '../uniswap_build/contracts/WETH9.json';
+import { ILedgity, MockUSDC, PancakeFactory__factory, PancakeRouter, PancakeRouter__factory, WBNB__factory } from '../typechain';
+import PancakeFactoryArtifact from '../pancakeswap_build/contracts/PancakeFactory.json';
+import PancakeRouterArtifact from '../pancakeswap_build/contracts/PancakeRouter.json';
+import WBNBArtifact from '../pancakeswap_build/contracts/WBNB.json';
 
 export async function getBlockTimestamp() {
   return (await ethers.provider.getBlock('latest')).timestamp;
@@ -48,7 +48,7 @@ export function toTokens(amount: BigNumberish, decimals: BigNumberish = LEDGITY_
   return BigNumber.from(amount).mul(BigNumber.from('10').pow(decimals));
 }
 
-export async function addLiquidityUtil(tokenAmountWithoutDecimals: BigNumberish, usdcAmountWithoutDecimals: BigNumberish, token: ILedgity, usdcToken: MockUSDC, router: UniswapV2Router02, from: string) {
+export async function addLiquidityUtil(tokenAmountWithoutDecimals: BigNumberish, usdcAmountWithoutDecimals: BigNumberish, token: ILedgity, usdcToken: MockUSDC, router: PancakeRouter, from: string) {
   const tokenAmount = toTokens(tokenAmountWithoutDecimals);
   const usdcAmount = toTokens(usdcAmountWithoutDecimals, await usdcToken.decimals());
   await token.approve(router.address, tokenAmount, { from });
@@ -57,12 +57,12 @@ export async function addLiquidityUtil(tokenAmountWithoutDecimals: BigNumberish,
   await router.addLiquidity(token.address, usdcToken.address, tokenAmount, usdcAmount, 0, 0, ZERO_ADDRESS, await getBlockTimestamp() + 3600, { from });
 }
 
-export async function deployUniswap(signer: Signer) {
-  const UniswapV2Factory = new ethers.ContractFactory(UniswapV2FactoryArtifact.abi, UniswapV2FactoryArtifact.bytecode, signer) as UniswapV2Factory__factory;
-  const UniswapV2Router02 = new ethers.ContractFactory(UniswapV2Router02Artifact.abi, UniswapV2Router02Artifact.bytecode, signer) as UniswapV2Router02__factory;
-  const WETH9 = new ethers.ContractFactory(WETH9Artifact.abi, WETH9Artifact.bytecode, signer) as WETH9__factory;
-  const factory = await UniswapV2Factory.deploy(ZERO_ADDRESS);
-  const weth = await WETH9.deploy();
-  const router = await UniswapV2Router02.deploy(factory.address, weth.address);
-  return { factory, router, weth };
+export async function deployPancakeswap(signer: Signer) {
+  const PancakeFactory = new ethers.ContractFactory(PancakeFactoryArtifact.abi, PancakeFactoryArtifact.bytecode, signer) as PancakeFactory__factory;
+  const PancakeRouter = new ethers.ContractFactory(PancakeRouterArtifact.abi, PancakeRouterArtifact.bytecode, signer) as PancakeRouter__factory;
+  const WBNB = new ethers.ContractFactory(WBNBArtifact.abi, WBNBArtifact.bytecode, signer) as WBNB__factory;
+  const factory = await PancakeFactory.deploy(ZERO_ADDRESS);
+  const wbnb = await WBNB.deploy();
+  const router = await PancakeRouter.deploy(factory.address, wbnb.address);
+  return { factory, router, wbnb };
 }
