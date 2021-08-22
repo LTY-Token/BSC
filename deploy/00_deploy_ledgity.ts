@@ -2,7 +2,7 @@ import { DeployFunction } from 'hardhat-deploy/types';
 
 const deploy: DeployFunction = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
-  const { deployer, uniswapRouter, usdc } = await getNamedAccounts();
+  const { deployer, pancakeswapRouter, usdc } = await getNamedAccounts();
   const ledgityDeployResult = await deploy('Ledgity', {
     from: deployer,
     args: [],
@@ -18,7 +18,7 @@ const deploy: DeployFunction = async ({ getNamedAccounts, deployments }) => {
   const reserveDeployResult = await deploy('Reserve', {
     from: deployer,
     args: [
-      uniswapRouter,
+      pancakeswapRouter,
       ledgityDeployResult.address,
       usdc,
       timelockDeployResult.address,

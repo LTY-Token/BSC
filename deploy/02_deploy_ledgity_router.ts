@@ -2,11 +2,11 @@ import { DeployFunction } from 'hardhat-deploy/types';
 
 const deploy: DeployFunction = async ({ getNamedAccounts, deployments }) => {
   const { deploy } = deployments;
-  const { deployer, uniswapRouter } = await getNamedAccounts();
+  const { deployer, pancakeswapRouter } = await getNamedAccounts();
 
   const ledgityRouterDeployResult = await deploy('LedgityRouter', {
     from: deployer,
-    args: [uniswapRouter],
+    args: [pancakeswapRouter],
     log: true,
   });
 

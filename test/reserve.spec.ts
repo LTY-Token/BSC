@@ -1,11 +1,10 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import chai from 'chai';
+import chai, { expect } from 'chai';
 import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
-import { addLiquidityUtil, deployUniswap, snapshottedBeforeEach, toTokens, ZERO_ADDRESS } from '../shared/utils';
-import { MockLedgity, MockUSDC, Reserve, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02 } from '../typechain';
-import UniswapV2PairArtifact from '../uniswap_build/contracts/UniswapV2Pair.json';
-const { expect } = chai;
+import { addLiquidityUtil, deployPancakeswap, snapshottedBeforeEach, toTokens, ZERO_ADDRESS } from '../shared/utils';
+import { MockLedgity, MockUSDC, Reserve, PancakeFactory, PancakePair, PancakeRouter } from '../typechain';
+import PancakePairArtifact from '../pancakeswap_build/contracts/PancakePair.json';
 
 describe('Reserve', () => {
   let aliceAccount: SignerWithAddress, bobAccount: SignerWithAddress, timelockAccount: SignerWithAddress;
@@ -20,12 +19,12 @@ describe('Reserve', () => {
    */
   let token: MockLedgity;
   let reserve: Reserve;
-  let factory: UniswapV2Factory;
+  let factory: PancakeFactory;
   let usdcToken: MockUSDC;
-  let router: UniswapV2Router02;
+  let router: PancakeRouter;
 
   snapshottedBeforeEach(async () => {
-    ({ factory, router } = await deployUniswap(aliceAccount));
+    ({ factory, router } = await deployPancakeswap(aliceAccount));
     usdcToken = await (await ethers.getContractFactory('MockUSDC')).deploy();
     token = await (await ethers.getContractFactory('MockLedgity')).deploy();
     await token.mint(alice, toTokens('100000000000000'));
@@ -39,10 +38,10 @@ describe('Reserve', () => {
 
   async function getPair() {
     const pairAddress = await factory.getPair(token.address, usdcToken.address);
-    return await ethers.getContractAt(UniswapV2PairArtifact.abi, pairAddress) as UniswapV2Pair;
+    return await ethers.getContractAt(PancakePairArtifact.abi, pairAddress) as PancakePair;
   }
 
-  async function getPairIndices(pair: UniswapV2Pair) {
+  async function getPairIndices(pair: PancakePair) {
     return await pair.token0() === token.address ? [0, 1] as const : [1, 0] as const;
   }
 

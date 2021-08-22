@@ -2,9 +2,9 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
-import { deployUniswap, getBlockTimestamp, NON_ZERO_ADDRESS, snapshottedBeforeEach, toTokens, ZERO_ADDRESS } from '../shared/utils';
-import { IERC20, Ledgity, LedgityRouter, MockUSDC, UniswapV2Factory, UniswapV2Pair, UniswapV2Router02 } from '../typechain';
-import UniswapV2PairArtifact from '../uniswap_build/contracts/UniswapV2Pair.json';
+import { deployPancakeswap, getBlockTimestamp, NON_ZERO_ADDRESS, snapshottedBeforeEach, toTokens, ZERO_ADDRESS } from '../shared/utils';
+import { IERC20, Ledgity, LedgityRouter, MockUSDC, PancakeFactory, PancakePair, PancakeRouter } from '../typechain';
+import PancakePairArtifact from '../pancakeswap_build/contracts/PancakePair.json';
 
 
 describe('LedgityRouter', () => {
@@ -17,26 +17,26 @@ describe('LedgityRouter', () => {
 
   let token: Ledgity;
   let usdcToken: MockUSDC;
-  let pair: UniswapV2Pair;
+  let pair: PancakePair;
   let tokenIndex: 0 | 1, usdcIndex: 0 | 1;
   let reservesBefore: { 0: BigNumber, 1: BigNumber; };
-  let factory: UniswapV2Factory;
-  let uniswapRouter: UniswapV2Router02;
+  let factory: PancakeFactory;
+  let pancakeRouter: PancakeRouter;
   let ledgityRouter: LedgityRouter;
   snapshottedBeforeEach(async () => {
-    ({ factory, router: uniswapRouter } = await deployUniswap(aliceAccount));
+    ({ factory, router: pancakeRouter } = await deployPancakeswap(aliceAccount));
 
     usdcToken = await (await ethers.getContractFactory('MockUSDC')).deploy();
     await usdcToken.mint(alice, toTokens('100000000000'));
 
     token = await (await ethers.getContractFactory('Ledgity')).deploy();
-    const tokenReserve = await (await ethers.getContractFactory('Reserve')).deploy(uniswapRouter.address, token.address, usdcToken.address, NON_ZERO_ADDRESS);
+    const tokenReserve = await (await ethers.getContractFactory('Reserve')).deploy(pancakeRouter.address, token.address, usdcToken.address, NON_ZERO_ADDRESS);
     token.initializeReserve(tokenReserve.address);
-    ledgityRouter = await (await ethers.getContractFactory('LedgityRouter')).deploy(uniswapRouter.address);
+    ledgityRouter = await (await ethers.getContractFactory('LedgityRouter')).deploy(pancakeRouter.address);
     await token.setIsExcludedFromDexFee(ledgityRouter.address, true);
     await token.setIsExcludedFromLimits(ledgityRouter.address, true);
 
-    pair = await ethers.getContractAt(UniswapV2PairArtifact.abi, await factory.getPair(token.address, usdcToken.address)) as UniswapV2Pair;
+    pair = await ethers.getContractAt(PancakePairArtifact.abi, await factory.getPair(token.address, usdcToken.address)) as PancakePair;
     [tokenIndex, usdcIndex] = await pair.token0() === token.address ? [0, 1] : [1, 0];
 
     await token.excludeAccount(alice);
@@ -47,9 +47,9 @@ describe('LedgityRouter', () => {
   async function addInitialLiquidity(tokenAmount: BigNumberish, usdcAmount: BigNumberish) {
     const wasExcluded = await token.isExcludedFromDexFee(alice);
     await token.setIsExcludedFromDexFee(alice, true);
-    await token.approve(uniswapRouter.address, tokenAmount);
-    await usdcToken.approve(uniswapRouter.address, usdcAmount);
-    await uniswapRouter.addLiquidity(
+    await token.approve(pancakeRouter.address, tokenAmount);
+    await usdcToken.approve(pancakeRouter.address, usdcAmount);
+    await pancakeRouter.addLiquidity(
       token.address, usdcToken.address,
       tokenAmount, usdcAmount, tokenAmount, usdcAmount,
       ZERO_ADDRESS, await getBlockTimestamp() + 3600,
