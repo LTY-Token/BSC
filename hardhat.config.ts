@@ -31,7 +31,7 @@ const config: HardhatUserConfig = {
       url: 'https://data-seed-prebsc-1-s1.binance.org:8545',
       chainId: 97,
       accounts: [TEST_PRIVATE_KEY],
-    }
+    },
   },
   etherscan: {
     apiKey: BSCSCAN_API_KEY,
@@ -51,9 +51,7 @@ const config: HardhatUserConfig = {
     },
   }),
   typechain: {
-    externalArtifacts: [
-      './pancakeswap_build/**/*.json',
-    ],
+    externalArtifacts: ['./pancakeswap_build/**/*.json'],
   },
 };
 

@@ -2,26 +2,32 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
-import { deployPancakeswap, evmIncreaseTime, getBlockTimestamp, snapshottedBeforeEach, toTokens, ZERO_ADDRESS } from '../shared/utils';
-import { LedgityPriceOracle, MockERC20, MockUSDC, PancakeFactory, PancakePair, PancakeRouter } from '../typechain';
 import PancakePairArtifact from '../pancakeswap_build/contracts/PancakePair.json';
+import {
+  deployPancakeswap,
+  evmIncreaseTime,
+  getBlockTimestamp,
+  snapshottedBeforeEach,
+  toTokens,
+  ZERO_ADDRESS,
+} from '../shared/utils';
+import { LedgityPriceOracle, MockERC20, MockUSDC, PancakeFactory, PancakePair, PancakeRouter } from '../typechain';
 
-
-const PERIOD = 12 * 60 * 60;  // 12 hours
-const INITIAL_LIQUIDITY = [toTokens('100000000'), toTokens('1000000000')] as const;  // 1 : 10 price
+const PERIOD = 12 * 60 * 60; // 12 hours
+const INITIAL_LIQUIDITY = [toTokens('100000000'), toTokens('1000000000')] as const; // 1 : 10 price
 
 describe('LedgityPriceOracle', () => {
   let aliceAccount: SignerWithAddress, bobAccount: SignerWithAddress;
   let alice: string, bob: string;
   before(async () => {
     [aliceAccount, bobAccount] = await ethers.getSigners();
-    [alice, bob] = [aliceAccount].map(account => account.address);
+    [alice, bob] = [aliceAccount].map((account) => account.address);
   });
 
   let oracle: LedgityPriceOracle;
   let token0: MockUSDC;
   let token1: MockUSDC;
-  let factory: PancakeFactory
+  let factory: PancakeFactory;
   let router: PancakeRouter;
   let pair: PancakePair;
   snapshottedBeforeEach(async () => {
@@ -30,7 +36,10 @@ describe('LedgityPriceOracle', () => {
     const tokenB = await (await ethers.getContractFactory('MockUSDC')).deploy();
     [token0, token1] = tokenA.address < tokenB.address ? [tokenA, tokenB] : [tokenB, tokenA];
     await factory.createPair(token0.address, token1.address);
-    pair = await ethers.getContractAt(PancakePairArtifact.abi, await factory.getPair(token0.address, token1.address)) as PancakePair;
+    pair = (await ethers.getContractAt(
+      PancakePairArtifact.abi,
+      await factory.getPair(token0.address, token1.address),
+    )) as PancakePair;
     await addLiquidity(INITIAL_LIQUIDITY[0], INITIAL_LIQUIDITY[1]);
     oracle = await (await ethers.getContractFactory('LedgityPriceOracle')).deploy(pair.address);
   });
@@ -40,23 +49,32 @@ describe('LedgityPriceOracle', () => {
     await token0.connect(from).approve(router.address, amount0);
     await token1.mint(from.address, amount1);
     await token1.connect(from).approve(router.address, amount1);
-    await router.connect(from).addLiquidity(
-      token0.address, token1.address,
-      amount0, amount1, 0, 0,
-      ZERO_ADDRESS, await getBlockTimestamp() + 3600,
-    );
+    await router
+      .connect(from)
+      .addLiquidity(
+        token0.address,
+        token1.address,
+        amount0,
+        amount1,
+        0,
+        0,
+        ZERO_ADDRESS,
+        (await getBlockTimestamp()) + 3600,
+      );
   }
 
   async function swap(amount: BigNumberish, tokenIn: MockERC20, tokenOut: MockERC20, from: SignerWithAddress) {
     await tokenIn.mint(from.address, amount);
     await tokenIn.connect(from).approve(router.address, amount);
-    await router.connect(from).swapExactTokensForTokensSupportingFeeOnTransferTokens(
-      amount,
-      0,
-      [tokenIn.address, tokenOut.address],
-      from.address,
-      await getBlockTimestamp() + 3600,
-    );
+    await router
+      .connect(from)
+      .swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        amount,
+        0,
+        [tokenIn.address, tokenOut.address],
+        from.address,
+        (await getBlockTimestamp()) + 3600,
+      );
   }
 
   describe('constructor', () => {
@@ -73,8 +91,9 @@ describe('LedgityPriceOracle', () => {
       const tokenB = await (await ethers.getContractFactory('MockUSDC')).deploy();
       await factory.createPair(tokenA.address, tokenB.address);
       const pairAddress = await factory.getPair(tokenA.address, tokenB.address);
-      await expect((await ethers.getContractFactory('LedgityPriceOracle')).deploy(pairAddress))
-        .to.be.revertedWith('LedgityPriceOracle: NO_RESERVES');
+      await expect((await ethers.getContractFactory('LedgityPriceOracle')).deploy(pairAddress)).to.be.revertedWith(
+        'LedgityPriceOracle: NO_RESERVES',
+      );
     });
   });
 
@@ -126,7 +145,7 @@ describe('LedgityPriceOracle', () => {
       await evmIncreaseTime(PERIOD);
       await oracle.update();
       await evmIncreaseTime(PERIOD);
-      await oracle.update();  // OK
+      await oracle.update(); // OK
     });
   });
 

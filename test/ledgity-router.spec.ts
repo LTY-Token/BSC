@@ -2,24 +2,30 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { expect } from 'chai';
 import { BigNumber, BigNumberish } from 'ethers';
 import { ethers } from 'hardhat';
-import { deployPancakeswap, getBlockTimestamp, NON_ZERO_ADDRESS, snapshottedBeforeEach, toTokens, ZERO_ADDRESS } from '../shared/utils';
-import { IERC20, Ledgity, LedgityRouter, MockUSDC, PancakeFactory, PancakePair, PancakeRouter } from '../typechain';
 import PancakePairArtifact from '../pancakeswap_build/contracts/PancakePair.json';
-
+import {
+  deployPancakeswap,
+  getBlockTimestamp,
+  NON_ZERO_ADDRESS,
+  snapshottedBeforeEach,
+  toTokens,
+  ZERO_ADDRESS,
+} from '../shared/utils';
+import { IERC20, Ledgity, LedgityRouter, MockUSDC, PancakeFactory, PancakePair, PancakeRouter } from '../typechain';
 
 describe('LedgityRouter', () => {
   let aliceAccount: SignerWithAddress, bobAccount: SignerWithAddress, charlieAccount: SignerWithAddress;
   let alice: string, bob: string, charlie: string;
   before(async () => {
     [aliceAccount, bobAccount, charlieAccount] = await ethers.getSigners();
-    [alice, bob, charlie] = [aliceAccount, bobAccount, charlieAccount].map(account => account.address);
+    [alice, bob, charlie] = [aliceAccount, bobAccount, charlieAccount].map((account) => account.address);
   });
 
   let token: Ledgity;
   let usdcToken: MockUSDC;
   let pair: PancakePair;
   let tokenIndex: 0 | 1, usdcIndex: 0 | 1;
-  let reservesBefore: { 0: BigNumber, 1: BigNumber; };
+  let reservesBefore: { 0: BigNumber; 1: BigNumber };
   let factory: PancakeFactory;
   let pancakeRouter: PancakeRouter;
   let ledgityRouter: LedgityRouter;
@@ -30,17 +36,22 @@ describe('LedgityRouter', () => {
     await usdcToken.mint(alice, toTokens('100000000000'));
 
     token = await (await ethers.getContractFactory('Ledgity')).deploy();
-    const tokenReserve = await (await ethers.getContractFactory('Reserve')).deploy(pancakeRouter.address, token.address, usdcToken.address, NON_ZERO_ADDRESS);
+    const tokenReserve = await (
+      await ethers.getContractFactory('Reserve')
+    ).deploy(pancakeRouter.address, token.address, usdcToken.address, NON_ZERO_ADDRESS);
     token.initializeReserve(tokenReserve.address);
     ledgityRouter = await (await ethers.getContractFactory('LedgityRouter')).deploy(pancakeRouter.address);
     await token.setIsExcludedFromDexFee(ledgityRouter.address, true);
     await token.setIsExcludedFromLimits(ledgityRouter.address, true);
 
-    pair = await ethers.getContractAt(PancakePairArtifact.abi, await factory.getPair(token.address, usdcToken.address)) as PancakePair;
-    [tokenIndex, usdcIndex] = await pair.token0() === token.address ? [0, 1] : [1, 0];
+    pair = (await ethers.getContractAt(
+      PancakePairArtifact.abi,
+      await factory.getPair(token.address, usdcToken.address),
+    )) as PancakePair;
+    [tokenIndex, usdcIndex] = (await pair.token0()) === token.address ? [0, 1] : [1, 0];
 
     await token.excludeAccount(alice);
-    await token.setIsExcludedFromDexFee(alice, false);  // exclude from dex fee to charge fees
+    await token.setIsExcludedFromDexFee(alice, false); // exclude from dex fee to charge fees
     reservesBefore = await pair.getReserves();
   });
 
@@ -50,30 +61,55 @@ describe('LedgityRouter', () => {
     await token.approve(pancakeRouter.address, tokenAmount);
     await usdcToken.approve(pancakeRouter.address, usdcAmount);
     await pancakeRouter.addLiquidity(
-      token.address, usdcToken.address,
-      tokenAmount, usdcAmount, tokenAmount, usdcAmount,
-      ZERO_ADDRESS, await getBlockTimestamp() + 3600,
+      token.address,
+      usdcToken.address,
+      tokenAmount,
+      usdcAmount,
+      tokenAmount,
+      usdcAmount,
+      ZERO_ADDRESS,
+      (await getBlockTimestamp()) + 3600,
     );
     await token.setIsExcludedFromDexFee(alice, wasExcluded);
   }
 
-  async function addLiquidityLedgityRouter(tokenA: IERC20, tokenB: IERC20, amountA: BigNumberish, amountB: BigNumberish, from: SignerWithAddress, to: string) {
+  async function addLiquidityLedgityRouter(
+    tokenA: IERC20,
+    tokenB: IERC20,
+    amountA: BigNumberish,
+    amountB: BigNumberish,
+    from: SignerWithAddress,
+    to: string,
+  ) {
     await tokenA.connect(from).approve(ledgityRouter.address, amountA);
     await tokenB.connect(from).approve(ledgityRouter.address, amountB);
-    await ledgityRouter.connect(from).addLiquidityBypassingFee(
-      tokenA.address, tokenB.address,
-      amountA, amountB, 0, 0,
-      to, await getBlockTimestamp() + 3600,
-    );
+    await ledgityRouter
+      .connect(from)
+      .addLiquidityBypassingFee(
+        tokenA.address,
+        tokenB.address,
+        amountA,
+        amountB,
+        0,
+        0,
+        to,
+        (await getBlockTimestamp()) + 3600,
+      );
   }
 
   async function removeLiquidityLedgityRouter(liquidity: BigNumberish, from: SignerWithAddress, to: string) {
     await pair.connect(from).approve(ledgityRouter.address, liquidity);
-    await ledgityRouter.connect(from).removeLiquidityBypassingFee(
-      token.address, usdcToken.address,
-      liquidity, 0, 0,
-      to, await getBlockTimestamp() + 3600,
-    );
+    await ledgityRouter
+      .connect(from)
+      .removeLiquidityBypassingFee(
+        token.address,
+        usdcToken.address,
+        liquidity,
+        0,
+        0,
+        to,
+        (await getBlockTimestamp()) + 3600,
+      );
   }
 
   describe('addLiquidityBypassingFee', () => {
@@ -101,7 +137,7 @@ describe('LedgityRouter', () => {
       const tokenBalanceBefore = await token.balanceOf(alice);
       const usdcBalanceBefore = await usdcToken.balanceOf(alice);
       await addLiquidityLedgityRouter(token, usdcToken, toTokens('1500'), toTokens('100'), aliceAccount, bob);
-      expect(await token.balanceOf(alice)).to.eq(tokenBalanceBefore.sub(toTokens('1000')));  // refunded
+      expect(await token.balanceOf(alice)).to.eq(tokenBalanceBefore.sub(toTokens('1000'))); // refunded
       expect(await usdcToken.balanceOf(alice)).to.eq(usdcBalanceBefore.sub(toTokens('100')));
     });
   });
@@ -131,7 +167,7 @@ describe('LedgityRouter', () => {
       const tokenAmount = toTokens('100');
       const usdcAmount = toTokens('10');
       await addLiquidityLedgityRouter(token, usdcToken, tokenAmount, usdcAmount, aliceAccount, alice);
-      await removeLiquidityLedgityRouter(await pair.balanceOf(alice), aliceAccount, bob);  // withdraw to Bob's account
+      await removeLiquidityLedgityRouter(await pair.balanceOf(alice), aliceAccount, bob); // withdraw to Bob's account
       expect(await token.balanceOf(bob)).to.eq(tokenAmount.sub(3163));
       expect(await usdcToken.balanceOf(bob)).to.eq(usdcAmount.sub(317));
     });

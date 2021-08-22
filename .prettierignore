@@ -1,0 +1,9 @@
+# Hardhat files
+artifacts
+cache
+typechain
+deployments
+
+# Tests
+coverage
+coverage.json

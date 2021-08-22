@@ -16,6 +16,8 @@
     "hardhat": "^2.5.0",
     "hardhat-deploy": "^0.8.11",
     "maid": "^0.3.0",
+    "prettier": "^2.3.2",
+    "prettier-plugin-organize-imports": "^2.3.3",
     "solidity-coverage": "^0.7.16",
     "ts-node": "^10.1.0",
     "typechain": "^5.1.1",
