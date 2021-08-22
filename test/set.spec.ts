@@ -5,7 +5,7 @@ import { SetWrapper } from '../typechain';
 describe('Set', () => {
   let alice: string, bob: string, charlie: string;
   before(async () => {
-    [alice, bob, charlie] = (await ethers.getSigners()).map(account => account.address);
+    [alice, bob, charlie] = (await ethers.getSigners()).map((account) => account.address);
   });
 
   let set: SetWrapper;
@@ -46,7 +46,6 @@ describe('Set', () => {
     expect(await set.lastAction()).to.eq(true);
     expect(await set.values()).to.deep.eq([alice, charlie]);
   });
-
 
   it('should not remove non-existing item', async () => {
     await set.remove(alice);

@@ -17,21 +17,11 @@ const deploy: DeployFunction = async ({ getNamedAccounts, deployments }) => {
 
   const reserveDeployResult = await deploy('Reserve', {
     from: deployer,
-    args: [
-      pancakeswapRouter,
-      ledgityDeployResult.address,
-      usdc,
-      timelockDeployResult.address,
-    ],
+    args: [pancakeswapRouter, ledgityDeployResult.address, usdc, timelockDeployResult.address],
     log: true,
   });
 
-  await deployments.execute(
-    'Ledgity',
-    { from: deployer, log: true },
-    'initializeReserve',
-    reserveDeployResult.address,
-  );
+  await deployments.execute('Ledgity', { from: deployer, log: true }, 'initializeReserve', reserveDeployResult.address);
 };
 
 deploy.tags = ['ledgity'];

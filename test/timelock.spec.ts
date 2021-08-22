@@ -1,5 +1,5 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import chai, { expect } from 'chai';
+import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import { evmIncreaseTime, getBlockTimestamp, snapshottedBeforeEach } from '../shared/utils';
 import { MockUSDC, Timelock } from '../typechain';
@@ -9,17 +9,17 @@ describe('Timelock', () => {
   let alice: string;
   before(async () => {
     [aliceAccount, bobAccount] = await ethers.getSigners();
-    [alice] = [aliceAccount].map(account => account.address);
+    [alice] = [aliceAccount].map((account) => account.address);
   });
 
-  const DELAY = 60 * 60;  // 1 hour
+  const DELAY = 60 * 60; // 1 hour
   let timelock: Timelock;
   let deployedAt: number;
   let token: MockUSDC;
 
   snapshottedBeforeEach(async () => {
     token = await (await ethers.getContractFactory('MockUSDC')).deploy();
-    timelock = (await (await ethers.getContractFactory('Timelock')).deploy(DELAY));
+    timelock = await (await ethers.getContractFactory('Timelock')).deploy(DELAY);
     deployedAt = await getBlockTimestamp();
     await token.mint(timelock.address, 1000);
   });
@@ -49,16 +49,18 @@ describe('Timelock', () => {
 
     it('should NOT withdraw to not the owner', async () => {
       await evmIncreaseTime(DELAY + 10);
-      await expect(timelock.connect(bobAccount).withdraw(token.address, '10')).to.be.revertedWith('Ownable: caller is not the owner');
+      await expect(timelock.connect(bobAccount).withdraw(token.address, '10')).to.be.revertedWith(
+        'Ownable: caller is not the owner',
+      );
     });
   });
 
   describe('setDelay', () => {
     it('should set delay after unlocked', async () => {
       await evmIncreaseTime(DELAY + 10);
-      const newDelay = 120 * 60;  // 2 minutes
+      const newDelay = 120 * 60; // 2 minutes
       await timelock.setDelay(newDelay);
-      expect(await timelock.unlockAt()).to.eq(await getBlockTimestamp() + newDelay);
+      expect(await timelock.unlockAt()).to.eq((await getBlockTimestamp()) + newDelay);
     });
 
     it('should NOT allow to set delay until unlocked', async () => {
