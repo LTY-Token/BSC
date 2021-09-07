@@ -72,9 +72,6 @@ contract Ledgity is ILedgity, ReflectToken {
 
     function initializePriceOracle(address priceOracleAddress) external onlyOwner {
         priceOracle = ILedgityPriceOracle(priceOracleAddress);
-        if (initialPrice == 0) {
-            initialPrice = _getPrice();
-        }
     }
 
     function totalBurn() external view returns (uint256) {
@@ -93,6 +90,10 @@ contract Ledgity is ILedgity, ReflectToken {
                 includeAccount(target);
             }
         }
+    }
+
+    function setInitialPrice(uint256 _initialPrice) external onlyOwner {
+        initialPrice = _initialPrice;
     }
 
     function setFeeDestination(FeeDestination fd) public onlyOwner {

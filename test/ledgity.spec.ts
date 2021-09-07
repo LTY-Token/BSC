@@ -52,6 +52,7 @@ describe('Ledgity', () => {
     await addLiquidityUtil('1000', '100', token, usdcToken, router, alice);
     priceOracle = await (await ethers.getContractFactory('LedgityPriceOracle')).deploy(await token.uniswapV2Pair());
     await token.initializePriceOracle(priceOracle.address);
+    await token.setInitialPrice('99999999999999999');
   });
 
   async function getPair() {
@@ -114,18 +115,15 @@ describe('Ledgity', () => {
       await expect(token.connect(bobAccount).initializePriceOracle(ZERO_ADDRESS)).to.be.revertedWith(
         'Ownable: caller is not the owner',
       );
+      await expect(token.connect(bobAccount).setInitialPrice(100000)).to.be.revertedWith(
+        'Ownable: caller is not the owner',
+      );
     });
 
     it('should set initial price', async () => {
-      expect(await token.initialPrice()).to.be.closeTo(toTokens(1).div(10), 1);
-    });
-
-    it('should NOT update initial price on another initialize', async () => {
-      await buy(toTokens('500'), aliceAccount);
-      await evmIncreaseTime((await priceOracle.period()).toNumber());
-      await priceOracle.update();
-      await token.initializePriceOracle(priceOracle.address);
-      expect(await token.initialPrice()).to.be.closeTo(toTokens(1).div(10), 1);
+      expect(await token.initialPrice()).to.eq('99999999999999999');
+      await token.setInitialPrice('4000');
+      expect(await token.initialPrice()).to.eq('4000');
     });
   });
 
