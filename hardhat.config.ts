@@ -36,6 +36,7 @@ const config: HardhatUserConfig = {
       url: 'https://bsc-dataseed.binance.org/',
       chainId: 56,
       accounts: [BSC_PRIVATE_KEY],
+      gasPrice: 5000000000,
     },
   },
   etherscan: {
