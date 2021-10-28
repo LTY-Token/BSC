@@ -5,7 +5,7 @@ import '@typechain/hardhat';
 import 'hardhat-deploy';
 import { HardhatUserConfig, task } from 'hardhat/config';
 import 'solidity-coverage';
-import { BSCSCAN_API_KEY, TEST_PRIVATE_KEY } from './env';
+import { BSCSCAN_API_KEY, BSC_PRIVATE_KEY, TEST_PRIVATE_KEY } from './env';
 
 function typedNamedAccounts<T>(namedAccounts: { [key in string]: T }) {
   return namedAccounts;
@@ -32,6 +32,12 @@ const config: HardhatUserConfig = {
       chainId: 97,
       accounts: [TEST_PRIVATE_KEY],
     },
+    bscmainnet: {
+      url: 'https://bsc-dataseed.binance.org/',
+      chainId: 56,
+      accounts: [BSC_PRIVATE_KEY],
+      gasPrice: 5000000000,
+    },
   },
   etherscan: {
     apiKey: BSCSCAN_API_KEY,
@@ -40,14 +46,17 @@ const config: HardhatUserConfig = {
     deployer: {
       private: 0,
       bsctestnet: 0,
+      bscmainnet: 0,
     },
     pancakeswapRouter: {
       private: '0xDbba2DF274ED3fD1350f5D18F85148Fb01fAbbfC',
       bsctestnet: '0x9Ac64Cc6e4415144C455BD8E4837Fea55603e5c3',
+      bscmainnet: '0x10ED43C718714eb63d5aA57B78B54704E256024E',
     },
     usdc: {
       private: '0xFF7F978a9e591C2a870aEc1fD0876f7FF8f3036e',
       bsctestnet: '0xcac913Ab86ef470781b5300ADC6720540838fac2',
+      bscmainnet: '0xe9e7cea3dedca5984780bafc599bd69add087d56',
     },
   }),
   typechain: {
